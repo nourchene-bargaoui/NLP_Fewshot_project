@@ -12,4 +12,16 @@ def get_tokens_and_labels(filename):
             else:
                 print(line)
     return tokens, labels
-        
+
+def split_into_sents(tokens):
+    sents = []
+    temp=[]
+    for t in tokens:
+        if t.endswith("."):
+            temp.append(t)
+            sents.append(temp)
+            temp=[]
+        else:
+            temp.append(t)
+
+    return sents
