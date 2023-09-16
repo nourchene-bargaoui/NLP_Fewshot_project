@@ -7,4 +7,4 @@ class Model(nn.Module):
         self.bert = BertModel.from_pretrained("bert-base-uncased")
     def forward(self, ids, attention_mask):
         bert_sequences = self.bert(ids, attention_mask=attention_mask)
-        print(bert_sequences)
+        #print(bert_sequences)
