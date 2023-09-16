@@ -2,13 +2,15 @@ from tokenize_and_stuff import get_tokens_and_labels, split_into_sents, get_uniq
 from transformers import BertTokenizer
 from model import Model
 import torch
+from torch.utils.data import TensorDataset, DataLoader
 import os
 def main():
     model=Model()
     max_len=512
-    batch_size=50
+    batch_size=1
     filename_to_t_and_l = {}
     train_path = "preprocessed_data/train/"
+    epochs = 1
     for filename in  os.listdir(train_path):  
         tokens, labels = get_tokens_and_labels(train_path+filename)
         filename_to_t_and_l[filename] = [tokens,labels]
@@ -120,15 +122,27 @@ def main():
             file_attention_mask.append(attention_mask)
             file_labels.append(label_ids)
         filename_to_ids_attention_labels[key] = [file_ids,file_attention_mask, file_labels]
+    total_attention_list=[]
+    total_ids_list=[]
+    total_labels_list = []
     for key in filename_to_ids_attention_labels:
         ids = filename_to_ids_attention_labels[key][0]
-        attention = filename_to_ids_attention_labels[key][1]
-        batch_ids = [ids[j:j+batch_size] for j in range(0,len(ids), batch_size)]
-        batch_attention = [attention[j:j+batch_size] for j in range(0,len(attention), batch_size)]
-        batch_ids_tensor = torch.LongTensor(batch_ids)
+        for i in ids:
+            total_ids_list.append(i)
 
-        batch_attention_tensor = torch.LongTensor(batch_attention)
-        outputs = model(batch_ids_tensor[0], batch_attention_tensor[0])
+        attention = filename_to_ids_attention_labels[key][1]
+        for a in attention:
+            total_attention_list.append(a)
+        labels_list = filename_to_ids_attention_labels[key][2]
+        for l in labels_list:
+            total_labels_list.append(l)
+
+    train_set = TensorDataset(torch.LongTensor(total_ids_list), torch.LongTensor(total_attention_list), torch.LongTensor(total_labels_list))
+    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
+    for i in range(epochs):
+        print(len(train_loader))
+        for t, a, l in train_loader:
+            outputs = model(t, a)
                     
 if __name__=='__main__':
     main()
