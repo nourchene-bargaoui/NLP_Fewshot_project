@@ -1,6 +1,7 @@
 from tokenize_and_stuff import get_tokens_and_labels, split_into_sents, get_unique_labels
 from transformers import BertTokenizer
 from model import Model
+from torch import nn
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 import os
@@ -10,10 +11,14 @@ def main():
     batch_size=1 #batch size for the model, 15 max
     filename_to_t_and_l = {} #mapping file names to tokens and labels
     train_path = "preprocessed_data/train/" #path to training, we should take this from CLI
+    num_classes = 26  # Update this with the actual number of classes
+    criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     epochs = 1 #number of epochs, how many times do we iterate over the dataset?
     for filename in  os.listdir(train_path): #for each training file...
         tokens, labels = get_tokens_and_labels(train_path+filename) #getting the tokens and corresponding labels
         filename_to_t_and_l[filename] = [tokens,labels]#map to filename
+
     # print(filename_to_t_and_l)
     tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")#laod tokenizer
     label_dict = {"O":0, #it's like a rainbow, mapping labels to label ids
@@ -144,6 +149,7 @@ def main():
         print(len(train_loader))#testing print statement
         for t, a, l in train_loader:# for each token ids, attention mask, and labels
             outputs = model(t, a)# feed into the model and get output!
+
                     
 if __name__=='__main__':
     main()
