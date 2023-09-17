@@ -1,3 +1,5 @@
 preprocessed_data/
 raw_data/
 __pycache__
+*.xml
+venv/*
