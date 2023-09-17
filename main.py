@@ -2,11 +2,16 @@ from tokenize_and_stuff import get_tokens_and_labels, split_into_sents
 from transformers import BertTokenizer
 from model import Model
 import torch
+from torch import nn
 import os
 def main():
-    model=Model()
-    max_len=512
-    batch_size=50
+    model = Model()
+    max_len = 512
+    batch_size = 50
+    num_classes = 3  # Update this with the actual number of classes
+    criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+
     filename_to_t_and_l = {}
     train_path = "preprocessed_data/train/" 
     for filename in  os.listdir(train_path):  
@@ -70,15 +75,14 @@ def main():
             file_ids.append(ids)
             file_attention_mask.append(attention_mask)
         filename_to_ids_attention[key] = [file_ids,file_attention_mask]
+
     for key in filename_to_ids_attention:
         ids = filename_to_ids_attention[key][0]
         attention = filename_to_ids_attention[key][1]
-        batch_ids = [ids[j:j+batch_size] for j in range(0,len(ids), batch_size)]
-        batch_attention = [attention[j:j+batch_size] for j in range(0,len(attention), batch_size)]
-        batch_ids_tensor = torch.LongTensor(batch_ids)
-        batch_attention_tensor = torch.LongTensor(batch_attention)
-        print(batch_attention_tensor[0].size())
-        outputs = model(batch_ids_tensor[0], batch_attention_tensor[0])
+        batch_ids = [ids[j:j + batch_size] for j in range(0, len(ids), batch_size)]
+        batch_attention = [attention[j:j + batch_size] for j in range(0, len(attention), batch_size)]
+        for batch_ids_tensor, batch_attention_tensor in zip(batch_ids, batch_attention):
+            outputs = model(batch_ids_tensor, batch_attention_tensor)
                     
 if __name__=='__main__':
     main()
