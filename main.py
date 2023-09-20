@@ -182,6 +182,7 @@ def main():
         i=1
         for input_ids, attention_mask, labels in test_loader:
             print(str(i)+"/"+str(len(test_loader)))
+            i+=1
             logits = model(input_ids, attention_mask)
             predictions = torch.argmax(logits, dim=-1).cpu().numpy()
             labels = labels.cpu().numpy()
