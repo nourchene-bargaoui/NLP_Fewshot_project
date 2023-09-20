@@ -12,8 +12,8 @@ def get_tokens_and_labels(filename):
                 tokens.append(line.split("\t")[0])
                 # postag.append(line.split("\t")[1])  Do we want POS Tags for something?
                 labels.append(line.split("\t")[2])
-            else:
-                print(line)
+            #else:
+                #print(line)
     return tokens, labels
 
 def split_into_sents(tokens, labels):
@@ -50,6 +50,90 @@ def get_unique_labels():
                 unique.append(label)
     print(unique)
     print(len(unique))
+
+def get_test_model_inputs(filename_to_t_and_l, max_len):
+    output = {}
+    tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+    label_dict = {"O":0, #it's like a rainbow, mapping labels to label ids
+                  "B-EXAMPLE_LABEL":1,
+                    "I-EXAMPLE_LABEL":2,
+                      "B-REACTION_PRODUCT":3,
+                        "I-REACTION_PRODUCT":4,
+                          "B-STARTING_MATERIAL":5,
+                            "I-STARTING_MATERIAL":6,
+                              "B-REAGENT_CATALYST":7,
+                                "I-REAGENT_CATALYST":8,
+                                  "B-SOLVENT":9,
+                                    "I-SOLVENT":10,
+                                     "B-OTHER_COMPOUND":11, 
+                                       "I-OTHER_COMPOUND":12,
+                                         "B-TIME":13,
+                                          "I-TIME":14,
+                                           "B-TEMPERATURE":15,
+                                            "I-TEMPERATURE":16, 
+                                             "B-YIELD_OTHER":17,
+                                               "I-YIELD_OTHER":18, 
+                                                "B-YIELD_PERCENT":19,
+                                                "I-YIELD_PERCENT":20,
+                                                "B-REACTION_STEP":21,
+                                                "I-REACTION_STEP":22,
+                                                "B-WORKUP":23,
+                                                "I-WORKUP":24,
+                                                 "PAD":-100 }
+    for filename in filename_to_t_and_l:
+        attention_list = []
+        ids_list = []
+        labels_list = []
+        tokens = filename_to_t_and_l[filename][0]
+        labels = filename_to_t_and_l[filename][1]
+        sents, sent_labels = split_into_sents(tokens, labels)
+        for i in range(len(sents)):
+            sent = sents[i]
+            label_list = sent_labels[i]#get corresponding labels
+            sent_attention = [1]
+            sent_ids = [101]
+            sent_label_ids = [0]
+            counter = 1 #how many tokens are in the lists? are we over max_len? are we under then we need to pad
+            for j in range(len(sent)): #for each word
+                word = sent[j]
+                l = label_list[j]#and label
+                first=True #if it's the first token, it should be B-something and if it's not it should be I-something
+                input_ids = tokenizer(word, return_tensors="pt", padding=True)['input_ids'].tolist()[0] #get those ids!!
+                for id in input_ids:#for each id
+                    if id!=101 and id != 102 and counter!=max_len-1:#we don't need 101 and 102 i'm manually adding them
+                        if first:#add B-, label as is
+                            first=False
+                            sent_label_ids.append(label_dict[l])
+                        else: # not B-
+                            if label_dict[l] in [1,3,5,7,9,11,13,15,17,19,21,23]:
+                                sent_label_ids.append(label_dict[l]+1)
+                            else: #if it's already I- just add the label and move on
+                                sent_label_ids.append(label_dict[l])
+                        sent_ids.append(id)
+                        sent_attention.append(1)
+                        counter+=1#n3xt token
+                    if counter==max_len-1:#at the end
+                        sent_ids.append(102)#add sep token
+                        sent_attention.append(1)
+                        counter+=1
+                        sent_label_ids.append(0)
+                    if counter==max_len: #exit loop
+                        break
+            if counter<max_len-1:#if we haven't met the max_len, first add sep token id
+                sent_ids.append(102)
+                sent_attention.append(1)
+                counter+=1
+                sent_label_ids.append(0)
+            for i in range(max_len-len(sent_ids)):#now we pad until max_len
+                sent_ids.append(0)
+                sent_attention.append(0)
+                sent_label_ids.append(-100)
+            attention_list.append(sent_attention)
+            ids_list.append(sent_ids)
+            labels_list.append(sent_label_ids)
+        output[filename] = [ids_list, attention_list,labels_list]
+    return output
+
 
 def get_model_inputs(filename_to_t_and_l, max_len):
     total_attention_list=[]

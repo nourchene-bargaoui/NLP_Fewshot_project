@@ -5,3 +5,5 @@ __pycache__
 venv/*
 .idea/*
 thing.png
+model_dumps/*.pth
+test_report.txt
