@@ -96,7 +96,6 @@ def main():
               loss.backward()
               optimizer.step()
               total_loss += loss.item()
-              break
               #break debugging only
 
           avg_loss = total_loss / len(train_loader)
@@ -118,7 +117,6 @@ def main():
                   labels = labels.cpu().numpy()
                   all_predictions.extend(predictions[0])
                   all_labels.extend(labels[0])
-                  break
                   #break debugging only
           
 
@@ -189,8 +187,8 @@ def main():
             labels = labels.cpu().numpy()
             all_predictions.extend(predictions[0])
             all_labels.extend(labels[0])
-        print(all_predictions)
-        print(all_labels)
+        # print(all_predictions)
+        # print(all_labels)
         with open("test_report.txt", "w") as out:
             out.write(classification_report(all_labels, all_predictions, target_names = list(label_dict.keys()), labels=list(label_dict.values())))
         
