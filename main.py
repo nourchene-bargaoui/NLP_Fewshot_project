@@ -60,15 +60,17 @@ def main():
     val_accuracy_history = []  # To store validation accuracy**********
 
 
-    epochs = 5 #number of epochs, how many times do we iterate over the dataset?
+    epochs = 100 #number of epochs, how many times do we iterate over the dataset?
     if train:
       for filename in  os.listdir(train_path): #for each training file...
-          tokens, labels = get_tokens_and_labels(train_path+filename) #getting the tokens and corresponding labels
-          filename_to_t_and_l[filename] = [tokens,labels]#map to filename
+          if filename.endswith(".connl"):
+            tokens, labels = get_tokens_and_labels(train_path+filename) #getting the tokens and corresponding labels
+            filename_to_t_and_l[filename] = [tokens,labels]#map to filename
       
       for filename in os.listdir(dev_path):
-          tokens, labels = get_tokens_and_labels(dev_path+filename)
-          filename_to_t_and_l_dev[filename] = [tokens, labels]
+          if filename.endswith(".connl"):
+            tokens, labels = get_tokens_and_labels(dev_path+filename)
+            filename_to_t_and_l_dev[filename] = [tokens, labels]
       # print(filename_to_t_and_l)
       
       tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")#laod tokenizer
@@ -164,8 +166,9 @@ def main():
         model.eval()
         filename_to_t_and_l_test = {}
         for filename in os.listdir(test_path):
-          tokens, labels = get_tokens_and_labels(test_path+filename)
-          filename_to_t_and_l_test[filename] = [tokens, labels]
+          if filename.endswith(".connl"):
+            tokens, labels = get_tokens_and_labels(test_path+filename)
+            filename_to_t_and_l_test[filename] = [tokens, labels]
         test_dict = get_test_model_inputs(filename_to_t_and_l_test, max_len)
         all_predictions = []
         all_labels = []
