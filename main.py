@@ -8,11 +8,65 @@ from torch.utils.data import TensorDataset, DataLoader
 from sklearn.metrics import f1_score, accuracy_score, classification_report # ****
 from torch import optim # ****
 import matplotlib.pyplot as plt# ****
-
+import argparse
 import os
 
 
 def main():
+    parser = argparse.ArgumentParser(
+                    prog='python main.py',
+                    description='Baseline NER system for CHEMU dataset')
+    parser.add_argument("--train_path", help="Path to training data, required if train is true")
+    parser.add_argument("--dev_path", help="path to the dev data for validation. required if train is true")
+    parser.add_argument("--test_path", help="path to the test data, required if test is true")
+    parser.add_argument("--train", action="store_true", help="train flag, use if training")
+    parser.add_argument("--test", action="store_true", help="test flag, use if you want to test")
+    parser.add_argument("--model", help="specify path to model, required if test is true and train is false.")
+    parser.add_argument("--epochs", help="specify the number of epochs, required if train is true")
+    args = parser.parse_args()
+
+    print("Train path: ", args.train_path)
+    print("Test path: ", args.test_path)
+    print("Dev path: ", args.dev_path)
+    print("Train flag: ", args.train)
+    print("Test flag: ", args.test)
+    print("model path: ", args.model)
+    train = args.train
+    test = args.test
+    train_path=""
+    dev_path = ""
+    test_path=""
+    model_path=""
+    epochs = 0
+    if not train and not test:
+       print("ERROR: You need to either pick train or test")
+       exit()
+    if train:
+      if args.train_path is None:
+         print("ERROR: need train path to be specified to train")
+         exit()
+      if args.dev_path is None:
+         print("ERROR: need dev path to be specified to train")
+         exit()
+      if args.epochs is None:
+         print("ERROR: need epochs to be specified to train")
+         exit()
+      train_path = args.train_path
+      dev_path=args.dev_path
+      epochs = int(args.epochs)
+    if test:
+      if not train:
+        if args.model is None:
+          print("ERROR: model path cannot be none if train is false and test is true")
+          exit()
+        model_path = args.model
+          
+      if args.test_path is None:
+        print("ERROR: Test path cannot be none for test==True")
+        exit()
+      test_path = args.test_path
+      exit()
+     #path to training, we should take this from CLI
     num_classes = 25  # Update this with the actual number of classes
     # model=Model() #our model from model.py
     model = NERModel(num_classes)  # Create the NER model with BiLSTM from model.py
@@ -20,10 +74,7 @@ def main():
     batch_size=1 #batch size for the model, 15 max
     filename_to_t_and_l = {} #mapping file names to tokens and labels
     filename_to_t_and_l_dev = {}
-    test_path = "preprocessed_data/test/"
-    train_path = "preprocessed_data/train/" #path to training, we should take this from CLI
-    dev_path = "preprocessed_data/dev/"
-    model_path = "something" #if test is true give us the path to the model
+
     train = True
     test= True
     label_dict = {"O":0, #it's like a rainbow, mapping labels to label ids
@@ -60,7 +111,6 @@ def main():
     val_accuracy_history = []  # To store validation accuracy**********
 
 
-    epochs = 100 #number of epochs, how many times do we iterate over the dataset?
     if train:
       for filename in  os.listdir(train_path): #for each training file...
           if filename.endswith(".connl"):
