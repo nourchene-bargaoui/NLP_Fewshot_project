@@ -74,10 +74,11 @@ def main():
       # print(filename_to_t_and_l)
       
       tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")#laod tokenizer
-      
+
       total_ids_list, total_attention_list, total_labels_list = get_model_inputs(filename_to_t_and_l, max_len)
       total_ids_list_dev, total_attention_list_dev, total_labels_list_dev = get_model_inputs(filename_to_t_and_l_dev, max_len)
       #convert to long tensors and add to dataset -> dataloader. shuffle and set batch_size
+
       train_set = TensorDataset(torch.LongTensor(total_ids_list), torch.LongTensor(total_attention_list), torch.LongTensor(total_labels_list))
       train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
 
