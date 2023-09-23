@@ -38,6 +38,7 @@ def main():
     test_path=""
     model_path=""
     epochs = 0
+    device="cuda:0"
     if not train and not test:
        print("ERROR: You need to either pick train or test")
        exit()
@@ -70,6 +71,7 @@ def main():
     num_classes = 25  # Update this with the actual number of classes
     # model=Model() #our model from model.py
     model = NERModel(num_classes)  # Create the NER model with BiLSTM from model.py
+    model.to(device)
     max_len=512 #max sequence length, this is bert's max
     batch_size=1 #batch size for the model, 15 max
     filename_to_t_and_l = {} #mapping file names to tokens and labels
@@ -104,6 +106,7 @@ def main():
                                                 "I-WORKUP":24}
 
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    optimizer.to(device)
 
     train_loss_history = []  # To store training loss ****
     val_loss_history = []    # To store validation loss********
@@ -143,8 +146,12 @@ def main():
           total_loss = 0.0
 
           for input_ids, attention_mask, labels in train_loader:
+              input_ids.to(device)
+              attention_mask.to(device)
+              labels.to(device)
               optimizer.zero_grad()
               logits = model(input_ids, attention_mask)
+              logits.to(device)
               loss = loss_function(logits.view(-1, num_classes), labels.view(-1))  # Flatten logits and labels
               loss.backward()
               optimizer.step()
@@ -162,7 +169,11 @@ def main():
           all_labels = []
           with torch.no_grad():
               for input_ids, attention_mask, labels in val_loader:
+                  input_ids.to(device)
+                  attention_mask.to(device)
+                  labels.to_device()
                   logits = model(input_ids, attention_mask)
+                  logits.to(device)
                   loss = loss_function(logits.view(-1, num_classes), labels.view(-1))
                   val_loss += loss.item()
 
@@ -235,6 +246,9 @@ def main():
         test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=True)
         i=1
         for input_ids, attention_mask, labels in test_loader:
+            input_ids.to(device)
+            attention_mask.to(device)
+            labels.to(device)
             print(str(i)+"/"+str(len(test_loader)))
             i+=1
             logits = model(input_ids, attention_mask)
