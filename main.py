@@ -73,7 +73,7 @@ def main():
     model = NERModel(num_classes)  # Create the NER model with BiLSTM from model.py
     model.to(device)
     max_len=512 #max sequence length, this is bert's max
-    batch_size=1 #batch size for the model, 15 max
+    batch_size=10 #batch size for the model, 15 max
     filename_to_t_and_l = {} #mapping file names to tokens and labels
     filename_to_t_and_l_dev = {}
 
@@ -105,8 +105,7 @@ def main():
                                                 "B-WORKUP":23,
                                                 "I-WORKUP":24}
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-    optimizer.to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.00001)
 
     train_loss_history = []  # To store training loss ****
     val_loss_history = []    # To store validation loss********
@@ -141,17 +140,18 @@ def main():
       weight = calculate_class_weights(label_dict, total_labels_list)
       loss_function = nn.CrossEntropyLoss(weight=torch.tensor(weight)) # our loss function !! now with weights
       # ******************************************************************************************
+      loss_function = loss_function.to(device)
+      print("Training beginning now")
       for epoch in range(epochs):
           model.train()
           total_loss = 0.0
 
           for input_ids, attention_mask, labels in train_loader:
-              input_ids.to(device)
-              attention_mask.to(device)
-              labels.to(device)
+              input_ids = input_ids.to(device)
+              attention_mask = attention_mask.to(device)
+              labels = labels.to(device)
               optimizer.zero_grad()
               logits = model(input_ids, attention_mask)
-              logits.to(device)
               loss = loss_function(logits.view(-1, num_classes), labels.view(-1))  # Flatten logits and labels
               loss.backward()
               optimizer.step()
@@ -169,30 +169,28 @@ def main():
           all_labels = []
           with torch.no_grad():
               for input_ids, attention_mask, labels in val_loader:
-                  input_ids.to(device)
-                  attention_mask.to(device)
-                  labels.to_device()
+                  input_ids = input_ids.to(device)
+                  attention_mask = attention_mask.to(device)
+                  labels = labels.to(device)
                   logits = model(input_ids, attention_mask)
-                  logits.to(device)
                   loss = loss_function(logits.view(-1, num_classes), labels.view(-1))
                   val_loss += loss.item()
 
-                  predictions = torch.argmax(logits, dim=-1).cpu().numpy()
-                  labels = labels.cpu().numpy()
-                  all_predictions.extend(predictions[0])
-                  all_labels.extend(labels[0])
+                  predictions = torch.argmax(logits, dim=-1).cpu().numpy()[0]
+                  labels = labels.cpu().numpy()[0]
+                  all_predictions.extend(predictions[labels != -100])
+                  all_labels.extend(labels[labels != -100])
                   #break debugging only
           
 
           avg_val_loss = val_loss / len(val_loader)
           val_loss_history.append(avg_val_loss)
 
-          val_f1 = f1_score(all_labels, all_predictions, average='weighted', labels=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24])
+          val_f1 = f1_score(all_labels, all_predictions, average='macro', labels=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24])
           val_f1_history.append(val_f1)
           val_accuracy = accuracy_score(all_labels, all_predictions)
           val_accuracy_history.append(val_accuracy)
           
-          val_f1 = f1_score(all_labels, all_predictions, average='weighted')
           print(f"Epoch {epoch + 1}/{epochs}, Train Loss: {avg_loss:.4f}, Validation Loss: {avg_val_loss:.4f}, Validation F1: {val_f1:.4f}, Validation Accuracy: {val_accuracy:.4f}")
 
       # Plot training history
@@ -246,16 +244,16 @@ def main():
         test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=True)
         i=1
         for input_ids, attention_mask, labels in test_loader:
-            input_ids.to(device)
-            attention_mask.to(device)
-            labels.to(device)
+            input_ids = input_ids.to(device)
+            attention_mask = attention_mask.to(device)
+            labels = labels.to(device)
             print(str(i)+"/"+str(len(test_loader)))
             i+=1
             logits = model(input_ids, attention_mask)
-            predictions = torch.argmax(logits, dim=-1).cpu().numpy()
-            labels = labels.cpu().numpy()
-            all_predictions.extend(predictions[0])
-            all_labels.extend(labels[0])
+            predictions = torch.argmax(logits, dim=-1).cpu().numpy()[0]
+            labels = labels.cpu().numpy()[0]
+            all_predictions.extend(predictions[labels!=-100])
+            all_labels.extend(labels[labels!=-100])
         # print(all_predictions)
         # print(all_labels)
         with open("test_report.txt", "w") as out:
