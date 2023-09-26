@@ -7,3 +7,4 @@ venv/*
 thing.png
 model_dumps/*.pth
 test_report.txt
+output.log
