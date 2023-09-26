@@ -66,7 +66,6 @@ def main():
         print("ERROR: Test path cannot be none for test==True")
         exit()
       test_path = args.test_path
-      exit()
      #path to training, we should take this from CLI
     num_classes = 25  # Update this with the actual number of classes
     # model=Model() #our model from model.py
@@ -77,8 +76,6 @@ def main():
     filename_to_t_and_l = {} #mapping file names to tokens and labels
     filename_to_t_and_l_dev = {}
 
-    train = True
-    test= True
     label_dict = {"O":0, #it's like a rainbow, mapping labels to label ids
                   "B-EXAMPLE_LABEL":1,
                     "I-EXAMPLE_LABEL":2,
@@ -112,7 +109,6 @@ def main():
     val_f1_history = []      # To store validation F1 score********
     val_accuracy_history = []  # To store validation accuracy**********
 
-
     if train:
       for filename in  os.listdir(train_path): #for each training file...
           if filename.endswith(".connl"):
@@ -124,7 +120,6 @@ def main():
             tokens, labels = get_tokens_and_labels(dev_path+filename)
             filename_to_t_and_l_dev[filename] = [tokens, labels]
       # print(filename_to_t_and_l)
-      
       tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")#laod tokenizer
 
       total_ids_list, total_attention_list, total_labels_list = get_model_inputs(filename_to_t_and_l, max_len)
@@ -176,8 +171,8 @@ def main():
                   loss = loss_function(logits.view(-1, num_classes), labels.view(-1))
                   val_loss += loss.item()
 
-                  predictions = torch.argmax(logits, dim=-1).cpu().numpy()[0]
-                  labels = labels.cpu().numpy()[0]
+                  predictions = torch.argmax(logits, dim=-1).cpu().numpy()
+                  labels = labels.cpu().numpy()
                   all_predictions.extend(predictions[labels != -100])
                   all_labels.extend(labels[labels != -100])
                   #break debugging only
@@ -223,6 +218,7 @@ def main():
         if not train: 
           model = NERModel(num_classes)
           model.load_state_dict(torch.load(model_path))
+          model = model.to(device)
         model.eval()
         filename_to_t_and_l_test = {}
         for filename in os.listdir(test_path):
@@ -241,7 +237,7 @@ def main():
             all_attention_masks.extend(test_dict[filename][1])
             all_label_ids.extend(test_dict[filename][2])
         test_set = TensorDataset(torch.LongTensor(all_ids), torch.LongTensor(all_attention_masks), torch.LongTensor(all_label_ids))
-        test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=True)
+        test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False)
         i=1
         for input_ids, attention_mask, labels in test_loader:
             input_ids = input_ids.to(device)
@@ -250,8 +246,8 @@ def main():
             print(str(i)+"/"+str(len(test_loader)))
             i+=1
             logits = model(input_ids, attention_mask)
-            predictions = torch.argmax(logits, dim=-1).cpu().numpy()[0]
-            labels = labels.cpu().numpy()[0]
+            predictions = torch.argmax(logits, dim=-1).cpu().numpy()
+            labels = labels.cpu().numpy()
             all_predictions.extend(predictions[labels!=-100])
             all_labels.extend(labels[labels!=-100])
         # print(all_predictions)
