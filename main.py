@@ -1,3 +1,52 @@
+"""
+Charlie Dil, Masrik Dahir, Nourchen Bargaoui - 9/27/2023
+
+Problem Statement: Given multiple texts, we want to be able to automatically identify key entities to use potentially in a larger NLP Task like LBD
+This project is to compare our fewshot system with.
+
+Example of input file:
+Example	O
+194	B-EXAMPLE_LABEL
+3-Isobutyl-5-methyl-1-(oxetan-2-ylmethyl)-6-[(2-oxoimidazolidin-1-yl)methyl]thieno[2,3-d]pyrimidine-2,4(1H,3H)-dione	B-REACTION_PRODUCT
+(racemate)	I-REACTION_PRODUCT
+813	O
+...
+
+Example of output (classification report)
+                    precision    recall  f1-score   support
+
+                  O       1.00      0.99      0.99     66273
+    B-EXAMPLE_LABEL       0.97      0.99      0.98       471
+    I-EXAMPLE_LABEL       0.89      0.96      0.92       150
+ B-REACTION_PRODUCT       0.92      0.96      0.94      1119
+ I-REACTION_PRODUCT       0.98      0.98      0.98     28934
+B-STARTING_MATERIAL       0.77      0.95      0.85       944
+I-STARTING_MATERIAL       0.98      0.97      0.97     19214
+ B-REAGENT_CATALYST       0.90      0.93      0.91       643
+ I-REAGENT_CATALYST       0.90      0.92      0.91      2845
+          B-SOLVENT       0.93      0.96      0.95       557
+          I-SOLVENT       0.95      0.97      0.96      1607
+   B-OTHER_COMPOUND       0.96      0.97      0.96      2487
+   I-OTHER_COMPOUND       0.94      0.92      0.93      8663
+             B-TIME       0.99      1.00      1.00       587
+             I-TIME       0.99      1.00      1.00       674
+      B-TEMPERATURE       0.98      1.00      0.99       795
+      I-TEMPERATURE       0.97      0.99      0.98      1255
+      B-YIELD_OTHER       0.98      1.00      0.99       579
+      I-YIELD_OTHER       0.99      1.00      0.99      1809
+    B-YIELD_PERCENT       1.00      1.00      1.00       506
+    I-YIELD_PERCENT       1.00      1.00      1.00       793
+... and the rest
+
+Usage instructions: See README.md
+
+Architecture/Algorithm:
+
+We use regular BERT for contextualized representations, which we pass into a BiLSTM and then into a linear layer to get a sequence of labels
+"""
+
+
+#import statments
 from tokenize_and_stuff import get_tokens_and_labels, split_into_sents, get_unique_labels, get_model_inputs, calculate_class_weights, get_test_model_inputs
 from transformers import BertTokenizer
 from model import NERModel
@@ -13,6 +62,8 @@ import os
 
 
 def main():
+    
+    #command line args
     parser = argparse.ArgumentParser(
                     prog='python main.py',
                     description='Baseline NER system for CHEMU dataset')
@@ -25,6 +76,7 @@ def main():
     parser.add_argument("--epochs", help="specify the number of epochs, required if train is true")
     args = parser.parse_args()
 
+    #print out command line args
     print("Train path: ", args.train_path)
     print("Test path: ", args.test_path)
     print("Dev path: ", args.dev_path)
@@ -38,8 +90,8 @@ def main():
     test_path=""
     model_path=""
     epochs = 0
-    device="cuda:0"
-    if not train and not test:
+    device="cuda:0" #for gpu
+    if not train and not test: #error messages for command line args
        print("ERROR: You need to either pick train or test")
        exit()
     if train:
@@ -137,12 +189,12 @@ def main():
       # ******************************************************************************************
       loss_function = loss_function.to(device)
       print("Training beginning now")
-      for epoch in range(epochs):
+      for epoch in range(epochs): #for e epochs
           model.train()
           total_loss = 0.0
 
-          for input_ids, attention_mask, labels in train_loader:
-              input_ids = input_ids.to(device)
+          for input_ids, attention_mask, labels in train_loader: #for each batch
+              input_ids = input_ids.to(device) # send to gpu
               attention_mask = attention_mask.to(device)
               labels = labels.to(device)
               optimizer.zero_grad()
@@ -214,8 +266,8 @@ def main():
       plt.savefig("thing.png")
       #plt.show()
       plt.close()
-    if test:
-        if not train: 
+    if test: #eval ccode
+        if not train: # if nto train we have to load
           model = NERModel(num_classes)
           model.load_state_dict(torch.load(model_path))
           model = model.to(device)
@@ -239,7 +291,7 @@ def main():
         test_set = TensorDataset(torch.LongTensor(all_ids), torch.LongTensor(all_attention_masks), torch.LongTensor(all_label_ids))
         test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False)
         i=1
-        for input_ids, attention_mask, labels in test_loader:
+        for input_ids, attention_mask, labels in test_loader: #for batch
             input_ids = input_ids.to(device)
             attention_mask = attention_mask.to(device)
             labels = labels.to(device)
@@ -252,7 +304,7 @@ def main():
             all_labels.extend(labels[labels!=-100])
         # print(all_predictions)
         # print(all_labels)
-        with open("test_report.txt", "w") as out:
+        with open("test_report.txt", "w") as out: #write out scores
             out.write(classification_report(all_labels, all_predictions, target_names = list(label_dict.keys()), labels=list(label_dict.values())))
         
 if __name__=='__main__':

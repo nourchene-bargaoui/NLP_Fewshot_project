@@ -18,15 +18,15 @@ def get_tokens_and_labels(filename):
 
     return tokens, labels
 
-def split_into_sents(tokens, labels):
+def split_into_sents(tokens, labels): #split list of toks ad labels into list of sentence lists
     sents = []
-    temp=[]
+    temp=[] #used to accumulate sentence
 
     sent_labels = []
-    temp2 = []
+    temp2 = []# used to accumulate labels
     for i in range(len(tokens)):
-        t = tokens[i]
-        l = labels[i]
+        t = tokens[i]#get token
+        l = labels[i]#get label
         if t.endswith("."):
             temp.append(t)
             sents.append(temp)
@@ -43,7 +43,7 @@ def split_into_sents(tokens, labels):
 
     return sents, sent_labels
 
-def get_unique_labels():
+def get_unique_labels(): #FOR TESTING ONLY
     unique = []
     for filepath in os.listdir("preprocessed_data/train/"):
         words, labels = get_tokens_and_labels("preprocessed_data/train/"+filepath)
