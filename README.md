@@ -15,4 +15,4 @@ Note that you will need to create output directories.
 ### Step 4
 Run the code! With your virtual environment activated, run:
 ```python main.py``` with the appropriate flags. A quick rundown: if you are training, use --train, --train_path, --dev_path, --epochs. If you are testing use --test, --test_path, --model_path. If you want to train and test in one run, use
---train --train_path --dev_path --epochs --test --test_path (note that you do not have to secify model path if you are training and testing). If you are ever confused, run ```python main.py -h```. Also the code will print out errors if the arguments are wrong.
+--train --train_path --dev_path --epochs --test --test_path (note that you do not have to secify model path if you are training and testing). If you are ever confused, run ```python main.py -h```. Also the code will print out errors if the arguments are wrong. Please use a "/" after paths to directories.
