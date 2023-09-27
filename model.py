@@ -5,10 +5,10 @@ from torch import nn
 class NERModel(nn.Module):
     def __init__(self, num_labels):
         super(NERModel, self).__init__()
-        self.bert = BertModel.from_pretrained("bert-base-uncased")
+        self.bert = BertModel.from_pretrained("bert-base-uncased") #bet
         self.dropout = nn.Dropout(0.1)
-        self.bilstm = nn.LSTM(input_size=768, hidden_size=100, num_layers=2, batch_first=True, bidirectional=True)
-        self.linear_layer = nn.Linear(200, num_labels)  # 100 * 2 (bidirectional)
+        self.bilstm = nn.LSTM(input_size=768, hidden_size=100, num_layers=2, batch_first=True, bidirectional=True) #bilstn
+        self.linear_layer = nn.Linear(200, num_labels)  # 100 * 2 (bidirectional) linear
 
     def forward(self, input_ids, attention_mask):
         outputs = self.bert(input_ids, attention_mask=attention_mask)
