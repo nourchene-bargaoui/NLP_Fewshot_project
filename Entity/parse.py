@@ -64,7 +64,7 @@ def main():
     folders = []
     if (len(sys.argv) == 1):
         # List of folders to process
-        folders = [r'F:\Repo\PycharmProjects\NLP_Fewshot_project\Entity\dev_data', r'F:\Repo\PycharmProjects\NLP_Fewshot_project\Entity\train_data', r'F:\Repo\PycharmProjects\NLP_Fewshot_project\Entity\code_test']
+        folders = [r'F:\Repo\PycharmProjects\NLP_Fewshot_project\Entity\dev', r'F:\Repo\PycharmProjects\NLP_Fewshot_project\Entity\train', r'F:\Repo\PycharmProjects\NLP_Fewshot_project\Entity\test']
     else:
         folders = [i.replace(" ","") for i in sys.argv[1].split(",")]
 
