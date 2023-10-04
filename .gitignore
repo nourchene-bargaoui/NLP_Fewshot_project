@@ -11,3 +11,4 @@ output.log
 Entity/code_test/*
 Entity/dev_data/*
 Entity/train_data/*
+thing.py
